@@ -16,9 +16,8 @@ def encode_npy_header(spec: ArraySpec):
     'shape': spec.shape
   }
 
-  header = repr(options).encode('utf-8')
-
-  header += b" " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(spec.shape[-1 if spec.fortran_order else 0]))) if len(options['shape']) > 0 else 0)
+  header = repr(options).encode()
+  header += b" " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(spec.shape[-1 if spec.fortran_order else 0]))) if len(spec.shape) > 0 else 0)
 
 
   hlen = len(header) + 1

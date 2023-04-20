@@ -1,9 +1,11 @@
-from struct import Struct
 import struct
+from struct import Struct
 from typing import IO, Literal, Optional
 
-local_file_header_struct = Struct("<IHHHHHIIIHH")
+from .utils import isolate_cursor
 
+
+local_file_header_struct = Struct("<IHHHHHIIIHH")
 
 def get_zip_offset(*, file_name: str):
   return local_file_header_struct.size + len(file_name.encode())
@@ -68,10 +70,13 @@ def encode_zip(
     0 # comment length
   )
 
-  # print(file.tell(), len(local_file_header) + compressed_size)
+  bytes_written = 0
 
-  file.write(central_directory_file_header)
-  file.write(end_of_central_directory_record)
+  bytes_written += file.write(central_directory_file_header)
+  bytes_written += file.write(end_of_central_directory_record)
 
-  file.seek(start_offset)
-  file.write(local_file_header)
+  with isolate_cursor(file):
+    file.seek(start_offset)
+    bytes_written += file.write(local_file_header)
+
+  return bytes_written

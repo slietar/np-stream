@@ -4,7 +4,7 @@ from typing import IO, Optional
 import numpy as np
 
 from .npy_utils import encode_npy_header
-from .utils import ArrayOrder, ArrayShape, isfortran, isolate_cursor, write_array
+from .utils import ArrayOrder, ArrayShape, CastingRule, isfortran, isolate_cursor, write_array
 
 
 class NpyStreamWriter:
@@ -17,6 +17,7 @@ class NpyStreamWriter:
     file: IO[bytes],
     /,
     *,
+    casting: Optional[CastingRule] = None,
     dtype: Optional[np.dtype | str] = None,
     order: Optional[ArrayOrder] = None,
     shape: Optional[ArrayShape] = None
@@ -25,6 +26,7 @@ class NpyStreamWriter:
     Creates an uncompressed array stream writer.
 
     Parameters
+      casting: The data casting rule. See numpy.ndarray.astype() for details. Defaults to `safe` if dtype is provided, otherwise to `equiv`.
       dtype: The data type. Will be inferred from the first array provided to write() if missing. Required if flush() is called without any preceding call to write().
       file: The output binary file.
       order: The memory order of the stored array. Either `C` for C-contiguous array or `F` for a Fortran-contiguous array. Will be inferred from the first array provided to write() if missing, defaulting to `C` if that array is neither C-contiguous or Fortran-contiguous, if it is both, or if flush() is called without any preceding call to write().
@@ -35,6 +37,7 @@ class NpyStreamWriter:
     self._fortran_order = (order == 'F') if order is not None else None
     self._shape = shape
 
+    self._casting: CastingRule = casting if casting is not None else ('safe' if dtype is not None else 'equiv')
     self._file = file
     self._length = 0
     self._start_offset = file.tell()
@@ -74,8 +77,9 @@ class NpyStreamWriter:
 
     if self._dtype is None:
       self._dtype = arr.dtype
-    elif arr.dtype != self._dtype:
-      raise ValueError("Invalid dtype")
+      casted = arr
+    else:
+      casted = arr.astype(self._dtype, casting=self._casting, copy=False)
 
     if self._shape is None:
       self._shape = arr.shape
@@ -91,8 +95,7 @@ class NpyStreamWriter:
       )))
 
     self._length += 1
-
-    write_array(self._file, arr, fortran_order=self._fortran_order)
+    write_array(self._file, casted, fortran_order=self._fortran_order)
 
   def __enter__(self):
     return self

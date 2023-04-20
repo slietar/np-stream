@@ -8,8 +8,8 @@ from zlib import crc32
 import numpy as np
 
 from .npy import NpyStreamReader, encode_npy_header
-from .utils import (ArrayOrder, ArrayShape, combine_crc32, isfortran,
-                    isolate_cursor, iter_array_chunks)
+from .utils import (ArrayOrder, ArrayShape, CastingRule, combine_crc32,
+                    isfortran, isolate_cursor, iter_array_chunks)
 from .zip import encode_zip, get_zip_offset
 
 
@@ -25,6 +25,8 @@ class NpzStreamWriter:
     file: IO[bytes],
     /,
     *,
+    casting: Optional[CastingRule] = None,
+    compression: Optional[dict] = None,
     dtype: Optional[np.dtype | str] = None,
     name: str = "arr_0.npy",
     order: Optional[ArrayOrder] = None,
@@ -34,6 +36,7 @@ class NpzStreamWriter:
     Creates a compressed array stream writer.
 
     Parameters
+      compression: A dictionary of options passed to zlib.compressobj.
       name: The name of the file in the resulting archive.
     """
 
@@ -41,11 +44,12 @@ class NpzStreamWriter:
     self._fortran_order = (order == 'F') if order is not None else None
     self._shape = shape
 
+    self._casting: CastingRule = casting if casting is not None else ('safe' if dtype is not None else 'equiv')
     self._file = file
     self._length = 0
     self._name = name
 
-    self._compressor = zlib.compressobj(2)
+    self._compressor = zlib.compressobj(**(compression or dict()))
     self._compressor_initialized = False
 
     # Test
@@ -135,8 +139,9 @@ class NpzStreamWriter:
 
     if self._dtype is None:
       self._dtype = arr.dtype
-    elif arr.dtype != self._dtype:
-      raise ValueError("Invalid dtype")
+      casted = arr
+    else:
+      casted = arr.astype(self._dtype, casting=self._casting, copy=False)
 
     if self._shape is None:
       self._shape = arr.shape
@@ -148,7 +153,7 @@ class NpzStreamWriter:
     if self._length < 1:
       bytes_written += self._init()
 
-    for chunk in iter_array_chunks(arr, fortran_order=self._fortran_order):
+    for chunk in iter_array_chunks(casted, fortran_order=self._fortran_order):
       compressed_chunk = self._compressor.compress(chunk)
 
       if not self._compressor_initialized:
@@ -160,7 +165,7 @@ class NpzStreamWriter:
 
       bytes_written += self._file.write(compressed_chunk)
 
-    self._size_uncompressed += arr.data.nbytes
+    self._size_uncompressed += casted.data.nbytes
     self._length += 1
 
     # print(f"Writing {(self._size_compressed / self._size_uncompressed * 100):.2f}%")

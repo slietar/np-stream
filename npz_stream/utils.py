@@ -8,6 +8,7 @@ import numpy.compat
 
 ArrayShape = tuple[int, ...]
 ArrayOrder = Literal['C', 'F']
+CastingRule = Literal['equiv', 'no', 'safe', 'same_kind', 'unsafe']
 
 
 def combine_crc32(a_data: bytes, b_crc32: int, b_size: int):

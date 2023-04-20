@@ -63,6 +63,25 @@ class NpyWriterTest(TestCase):
       self.assertTrue(np.array_equal(loaded, np.moveaxis(arr, 0, -1)))
       self.assertTrue(loaded.flags.f_contiguous)
 
+  def test_cast(self):
+    with TemporaryFile() as file:
+      shape = (3, 4)
+
+      with NpyStreamWriter(file, dtype='f4') as writer:
+        writer.write(np.zeros(shape, dtype='f2'))
+        writer.write(np.zeros(shape, dtype='f4'))
+        writer.write(np.zeros(shape, dtype='u2'))
+
+        with self.assertRaises(TypeError):
+          writer.write(np.zeros(shape, dtype='f8'))
+
+        with self.assertRaises(TypeError):
+          writer.write(np.zeros(shape, dtype='u4'))
+
+      file.seek(0)
+      np.load(file)
+
+
   def test_no_entries(self):
     shape = (3, 6)
 
@@ -175,7 +194,6 @@ class NpzWriterTest(TestCase):
 
     file.seek(0)
     self.assertTrue(np.array_equal(np.load(file)['arr_0'], arr))
-
 
   def test_no_entries(self):
     shape = (3, 6)

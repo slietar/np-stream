@@ -3,7 +3,7 @@ requires = ["setuptools>=66"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "npz-stream"
+name = "np-stream"
 version = "0.1.0"
 
 description = "A replacement for the np.load(), np.save() and np.savez_compressed() NumPy functions with support for streaming data on one dimension"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/slietar/npz-stream"
+repository = "https://github.com/slietar/np-stream"
 
 [tool.setuptools.packages.find]
-include = ["npz-stream"]
+include = ["np_stream"]

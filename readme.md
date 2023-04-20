@@ -1,4 +1,4 @@
-# npz-stream
+# np-stream
 
 This Python package provides a replacement for the `np.load()`, `np.save()` and `np.savez_compressed()` NumPy functions with support for streaming data on one dimension.
 
@@ -8,7 +8,7 @@ For uncompressed arrays with a known size, use [`np.memmap()`](https://numpy.org
 ## Installation
 
 ```sh
-$ pip install npz-stream
+$ pip install np-stream
 ```
 
 
@@ -19,7 +19,7 @@ $ pip install npz-stream
 The dimension which lists entries is added first for C-contiguous arrays (the default when creating arrays) and last otherwise. In this example, the array is C-contiguous, therefore its final shape is `(100, 6, 2)`.
 
 ```py
-from npz_stream import NpyStreamWriter
+from np_stream import NpyStreamWriter
 import numpy as np
 
 with NpyStreamWriter(file) as writer:
@@ -43,8 +43,8 @@ writer.flush()
 To produced compressed data, just replace `NpyStreamWriter` with `NpzStreamWriter` and create an `.npz` instead of an `.npy` file. The writer uses Deflate compression.
 
 ```diff
-- from npz_stream import NpyStreamWriter
-+ from npz_stream import NpzStreamWriter
+- from np_stream import NpyStreamWriter
++ from np_stream import NpzStreamWriter
 
   entry_shape = (6, 2)
 

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=66"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "npz-stream"
+version = "0.1.0"
+
+description = "A replacement for the np.load(), np.save() and np.savez_compressed() NumPy functions with support for streaming data on one dimension"
+readme = "readme.md"
+license = { text = "EUPL-1.2" }
+requires-python = ">=3.11"
+
+dependencies = [
+  "numpy~=1.23"
+]
+
+[project.urls]
+repository = "https://github.com/slietar/npz-stream"
+
+[tool.setuptools.packages.find]
+include = ["npz-stream"]

@@ -1,18 +1,15 @@
-from io import BufferedIOBase, BytesIO, RawIOBase
-import io
 from struct import Struct
 import struct
-from typing import Literal, Optional
+from typing import IO, Literal, Optional
 
 local_file_header_struct = Struct("<IHHHHHIIIHH")
 
 
 def get_zip_offset(*, file_name: str):
-  file_name_encoded = file_name.encode('utf-8')
-  return local_file_header_struct.size + len(file_name_encoded)
+  return local_file_header_struct.size + len(file_name.encode())
 
 def encode_zip(
-  file: BufferedIOBase | RawIOBase,
+  file: IO[bytes],
   *,
   compressed_size: int,
   compression: Optional[Literal['deflate', 'lzma']] = None,
@@ -22,7 +19,7 @@ def encode_zip(
   uncompressed_size: int
 ):
   compression_method = { None: 0, 'deflate': 8, 'lzma': 14 }[compression]
-  file_name_encoded = file_name.encode('utf-8')
+  file_name_encoded = file_name.encode()
 
   local_file_header = local_file_header_struct.pack(
     0x04034b50, # local file header signature

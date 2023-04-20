@@ -1,6 +1,5 @@
+import numpy as np
 import struct
-
-from .shared import ArraySpec
 
 
 MAGIC_PREFIX = b"\x93NUMPY"
@@ -9,15 +8,17 @@ ARRAY_ALIGN = 64
 BUFFER_SIZE = 2 ** 18
 GROWTH_AXIS_MAX_DIGITS = 21
 
-def encode_npy_header(spec: ArraySpec):
+def encode_npy_header(*, dtype: np.dtype, fortran_order: bool, partial: bool = False, shape: tuple[int, ...]):
   options = {
-    'descr': (spec.dtype.descr if spec.dtype.names is not None else spec.dtype.str),
-    'fortran_order': spec.fortran_order,
-    'shape': spec.shape
+    'descr': (dtype.descr if dtype.names is not None else dtype.str),
+    'fortran_order': fortran_order,
+    'shape': ((0, shape) if partial else shape)
   }
 
   header = repr(options).encode()
-  header += b" " * ((GROWTH_AXIS_MAX_DIGITS - len(repr(spec.shape[-1 if spec.fortran_order else 0]))) if len(spec.shape) > 0 else 0)
+
+  if partial:
+    header += b" " * (GROWTH_AXIS_MAX_DIGITS - 1)
 
 
   hlen = len(header) + 1
